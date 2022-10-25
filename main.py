@@ -1,7 +1,7 @@
 import sys, pygame, time, asyncio, threading, math
 pygame.init()
 
-size = width, height = 1920, 1080
+size = width, height = 2200, 1200
 
 
 screen = pygame.display.set_mode(size)
@@ -23,7 +23,8 @@ class Car:
         self.perm_image = image
         self.angle = 1
         self.direction = 360
-        self.speed = 0
+        self.speed = 0.2
+        self.antispeed = 2
         self.x_shift = 0
         self.y_shift = 0
         self.speed2 = 0
@@ -40,8 +41,8 @@ class Car:
         #print(self.direction)
 
     def drive(self):
-        print(self.direction)
-        print(self.speed)
+        #print(self.direction)
+        #print(self.speed)
         #self.direction = 360 - self.direction
         #print(self.direction)
         if self.speed == 0:
@@ -49,21 +50,23 @@ class Car:
         change_x = math.cos(math.radians(int(90 - self.direction))) * self.speed
         change_y = math.sin(math.radians(int(90 - self.direction))) * self.speed
 
-        print("change = ", change_x, change_y)
+        #print("change = ", change_x, change_y)
 
-        print("coords = ", self.x, self.y)
+        #print("coords = ", self.x, self.y)
         self.x += change_x
         self.y -= change_y
 
+        self.antispeed = 1 / self.speed
+
     def accelerate(self):
         self.speed2 = self.speed
-        if self.speed < 9:
-            self.speed *= 1.03
+        if self.speed < 12:
+            self.speed *= 1.025
 
     def drop_speed(self):
         self.speed = self.speed / 1.01
         if self.speed < 0.5:
-            self.speed = 0
+            self.speed = 0.5
 
 
 
@@ -90,11 +93,25 @@ while True:
 
     # Rotation
     if keys[pygame.K_a]:
-        print("Key A is pressed.")
-        rotation_shift = 0.7
+        print("Key A is pressed.", car.speed)
+        if car.speed > 3:
+            rotation_shift = 1.5
+        elif car.speed > 5:
+            rotation_shift = 2
+        elif car.speed > 7:
+            rotation_shift = 3
+        else:
+            rotation_shift = 0.7
     elif keys[pygame.K_d]:
-        print('key D is pressed.')
-        rotation_shift = -0.7
+        print('key D is pressed.', car.speed)
+        if car.speed > 3:
+            rotation_shift = -1.5
+        elif car.speed > 5:
+            rotation_shift = -2
+        elif car.speed > 7:
+            rotation_shift = -3
+        else:
+            rotation_shift = -0.7
     else:
         rotation_shift = 0
 
