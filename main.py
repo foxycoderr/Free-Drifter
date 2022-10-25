@@ -31,6 +31,7 @@ class Car:
         self.y_shift = 0
         self.speed2 = 0
         self.acc_mult = 1.025
+        self.colliding = False
 
     def display(self, screen):
         self.image = pygame.transform.rotate(self.perm_image, self.direction*-1)
@@ -42,6 +43,20 @@ class Car:
         self.direction -= angle
         self.direction = self.direction % 360
         #print(self.direction)
+
+    def check_wall_collision(self):
+        self.colliding = False
+        if self.x > 2170:
+            self.x -= self.speed
+        if self.x < 30:
+            self.x += self.speed
+
+        if self.y > 1170:
+            self.y -= self.speed
+        if self.y < 30:
+            self.y += self.speed
+
+
 
     def drive(self):
         #print(self.direction)
@@ -170,13 +185,15 @@ while True:
     if int(car.speed*10) % 2 == 0:
         speed_text.text = f"{int(car.speed*10)}"
 
+    car.check_wall_collision()
 
-
+    #if car.colliding == False:
     car.drive()
     car.rotate(rotation_shift)
     screen.blit(bg_image, bg_rect)
     car.display(screen)
     speedometer.display(screen)
+
 
     if car.speed < 0.9:
         speed_text.x = 110
