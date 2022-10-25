@@ -2,7 +2,7 @@ import sys, pygame, time, asyncio, threading, math
 pygame.init()
 
 size = width, height = 2200, 1200
-
+pygame.font.init()
 
 screen = pygame.display.set_mode(size)
 
@@ -10,10 +10,12 @@ screen = pygame.display.set_mode(size)
 bg_image = pygame.image.load("bg.png")
 bg_rect = bg_image.get_rect()
 
-car_image = pygame.image.load("car.png")
+speedometer_image = pygame.image.load("Speedometer.png")
+car_image = pygame.image.load("car_half.png")
 
 screen.blit(bg_image, bg_rect)
 pygame.display.flip()
+
 
 class Car:
     def __init__(self, image):
@@ -28,6 +30,7 @@ class Car:
         self.x_shift = 0
         self.y_shift = 0
         self.speed2 = 0
+        self.acc_mult = 1.025
 
     def display(self, screen):
         self.image = pygame.transform.rotate(self.perm_image, self.direction*-1)
@@ -60,25 +63,64 @@ class Car:
 
     def accelerate(self):
         self.speed2 = self.speed
-        if self.speed < 12:
-            self.speed *= 1.025
+        if self.speed < 1:
+            self.acc_mult = 1.025
+        elif self.speed < 3:
+            self.acc_mult = 1.01
+        elif self.speed < 4:
+            self.acc_mult = 1.002
+        elif self.speed < 5:
+            self.acc_mult = 1.001
+        elif self.speed < 6:
+            self.acc_mult = 1.001
+        elif self.speed < 7:
+            self.acc_mult = 1.001
+        elif self.speed < 8:
+            self.acc_mult = 1.0005
+        else:
+            self.acc_mult = 1.005
+
+
+        if self.speed < 8:
+            self.speed *= self.acc_mult
 
     def drop_speed(self):
-        self.speed = self.speed / 1.01
+        self.speed = self.speed / 1.005
+        if self.speed < 0.5:
+            self.speed = 0.5
+
+    def brake(self):
+        self.speed = self.speed / 1.02
         if self.speed < 0.5:
             self.speed = 0.5
 
 
+class Data_Sign:
+    def __init__(self, x, y, text, color):
+        self.x = x
+        self.y = y
+        self.text = text
+        #self.font = font
+        self.color = color
+        self.font = pygame.font.Font("DS-DIGIB.ttf", 120)
+        self.text_obj = self.font.render(self.text, True, (self.color))
 
+    def display(self, screen):
+        self.text_obj = self.font.render(self.text, True, (self.color))
+        screen.blit(self.text_obj, ((140 - self.text_obj.get_width() // 2, 145 - self.text_obj.get_height() // 2)))
 
+class Speedometer:
+    def __init__(self, image):
+        self.x = 30
+        self.y = 30
+        self.image = image
 
-
-
-
-
-
+    def display(self, screen):
+        screen.blit(self.image, (self.x, self.y))
 
 car = Car(image=car_image)
+speedometer = Speedometer(speedometer_image)
+speed_text = Data_Sign(x= 110, y=70, text=f"6", color=(255, 255, 255))
 
 rotation_shift = 0
 x_shift = 0
@@ -117,15 +159,32 @@ while True:
 
     #Movement
     if keys[pygame.K_w]:
-        print("Key W is pressed.")
+        print("Key W is pressed.", car.speed)
         car.accelerate()
     else:
         car.drop_speed()
+
+    if keys[pygame.K_s]:
+        print("Key S is pressed.", car.speed)
+        car.brake()
+    if int(car.speed*10) % 2 == 0:
+        speed_text.text = f"{int(car.speed*10)}"
+
+
 
     car.drive()
     car.rotate(rotation_shift)
     screen.blit(bg_image, bg_rect)
     car.display(screen)
+    speedometer.display(screen)
+
+    if car.speed < 0.9:
+        speed_text.x = 110
+        speed_text.display(screen)
+    else:
+        speed_text.x = 80
+        speed_text.display(screen)
+
     pygame.display.flip()
 
 
