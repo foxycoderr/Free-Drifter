@@ -1,4 +1,5 @@
 import sys, pygame, time, asyncio, threading, math
+from datetime import datetime, timedelta
 pygame.init()
 
 size = width, height = 2200, 1200
@@ -10,8 +11,10 @@ screen = pygame.display.set_mode(size)
 bg_image = pygame.image.load("bg.png")
 bg_rect = bg_image.get_rect()
 
+needle_image = pygame.image.load("Needle.png")
+
 speedometer_image = pygame.image.load("Speedometer.png")
-car_image = pygame.image.load("car_half.png")
+car_image = pygame.image.load("car_half2.png")
 
 screen.blit(bg_image, bg_rect)
 pygame.display.flip()
@@ -44,17 +47,38 @@ class Car:
         self.direction = self.direction % 360
         #print(self.direction)
 
-    def check_wall_collision(self):
-        self.colliding = False
-        if self.x > 2170:
+    def check_wall_collision(self, needle):
+        collision = False
+        if self.x > 2175:
+            self.speed = 1
+            if needle.degrees_from_0 < 120:
+                needle.degrees_from_0 += 8
             self.x -= self.speed
-        if self.x < 30:
+
+        if self.x < 25:
+            self.speed = 1
+            if needle.degrees_from_0 < 120:
+                needle.degrees_from_0 += 8
             self.x += self.speed
 
-        if self.y > 1170:
+
+        if self.y > 1175:
+            self.speed = 1
             self.y -= self.speed
-        if self.y < 30:
+            if needle.degrees_from_0 < 120:
+                needle.degrees_from_0 += 8
+
+        if self.y < 25:
+            self.speed = 1
+            if needle.degrees_from_0 < 120:
+                needle.degrees_from_0 += 8
             self.y += self.speed
+
+
+        if self.y < 35 or self.y > 1165 or self.x < 35 or self.x > 2165:
+            collision = True
+
+        self.colliding = collision
 
 
 
@@ -76,18 +100,18 @@ class Car:
 
         self.antispeed = 1 / self.speed
 
-    def accelerate(self):
+    def accelerate(self, needle):
         self.speed2 = self.speed
         if self.speed < 1:
             self.acc_mult = 1.025
         elif self.speed < 3:
-            self.acc_mult = 1.01
+            self.acc_mult = 1.025
         elif self.speed < 4:
-            self.acc_mult = 1.002
+            self.acc_mult = 1.025
         elif self.speed < 5:
-            self.acc_mult = 1.001
+            self.acc_mult = 1.005
         elif self.speed < 6:
-            self.acc_mult = 1.001
+            self.acc_mult = 1.005
         elif self.speed < 7:
             self.acc_mult = 1.001
         elif self.speed < 8:
@@ -98,31 +122,41 @@ class Car:
 
         if self.speed < 8:
             self.speed *= self.acc_mult
+            if needle.degrees_from_0 > 1 and not self.colliding:
+                needle.degrees_from_0 -= self.acc_mult/2
 
-    def drop_speed(self):
+    def drop_speed(self, needle):
         self.speed = self.speed / 1.005
         if self.speed < 0.5:
             self.speed = 0.5
+        else:
+            if needle.degrees_from_0 < 120:
+                needle.degrees_from_0 += 0.3
+
 
     def brake(self):
         self.speed = self.speed / 1.02
         if self.speed < 0.5:
             self.speed = 0.5
+        else:
+            if needle.degrees_from_0 < 120:
+                needle.degrees_from_0 += 1
 
 
 class Data_Sign:
-    def __init__(self, x, y, text, color):
+    def __init__(self, x, y, text, color, size):
         self.x = x
         self.y = y
         self.text = text
         #self.font = font
         self.color = color
-        self.font = pygame.font.Font("DS-DIGIB.ttf", 120)
+        self.font = pygame.font.SysFont(name="Calibri", size=size, bold=True)
         self.text_obj = self.font.render(self.text, True, (self.color))
 
     def display(self, screen):
         self.text_obj = self.font.render(self.text, True, (self.color))
-        screen.blit(self.text_obj, ((140 - self.text_obj.get_width() // 2, 145 - self.text_obj.get_height() // 2)))
+        print("display", self.x, self.y)
+        screen.blit(self.text_obj, ((self.x - self.text_obj.get_width() // 2, self.y - self.text_obj.get_height() // 2)))
 
 class Speedometer:
     def __init__(self, image):
@@ -131,17 +165,42 @@ class Speedometer:
         self.image = image
 
     def display(self, screen):
-        screen.blit(self.image, (self.x, self.y))
+        screen.blit(pygame.transform.scale(surface=self.image, size=(200, 200)), (self.x, self.y))
 
+class Needle:
+    def __init__(self,x ,y, image):
+        self.x = x
+        self.y = y
+        self.degrees_from_0 = 120
+        self.image = image
+        self.perm_image = image
+
+    def display(self, screen):
+        self.image = pygame.transform.rotate(self.perm_image, self.degrees_from_0)
+        screen.blit(self.image, self.image.get_rect(center=[self.x, self.y]))
+
+
+needle = Needle(x=125, y=130, image=needle_image)
 car = Car(image=car_image)
 speedometer = Speedometer(speedometer_image)
-speed_text = Data_Sign(x= 110, y=70, text=f"6", color=(255, 255, 255))
+fps = Data_Sign(x=2150, y=30, text="FPS", color = (255, 255, 255), size=20)
+speed_text = Data_Sign(x= 130, y=125, text=f"6", color=(255, 255, 255), size=80)
 
 rotation_shift = 0
 x_shift = 0
 y_shift = 0
 
+prev = datetime.utcnow()
+FPS = 0
 while True:
+    FPS += 1
+    print("FPS", FPS)
+    if datetime.utcnow() - prev > timedelta(seconds=1):
+        prev = datetime.utcnow()
+        fps.text = str(FPS)
+        FPS = 0
+
+
     event = pygame.event.poll()
     if event.type == pygame.QUIT:
         exit()
@@ -175,17 +234,20 @@ while True:
     #Movement
     if keys[pygame.K_w]:
         print("Key W is pressed.", car.speed)
-        car.accelerate()
+        car.accelerate(needle)
+
     else:
-        car.drop_speed()
+        car.drop_speed(needle)
+
 
     if keys[pygame.K_s]:
         print("Key S is pressed.", car.speed)
         car.brake()
+
     if int(car.speed*10) % 2 == 0:
         speed_text.text = f"{int(car.speed*10)}"
 
-    car.check_wall_collision()
+    car.check_wall_collision(needle)
 
     #if car.colliding == False:
     car.drive()
@@ -193,19 +255,10 @@ while True:
     screen.blit(bg_image, bg_rect)
     car.display(screen)
     speedometer.display(screen)
+    fps.display(screen)
+    needle.display(screen)
 
 
-    if car.speed < 0.9:
-        speed_text.x = 110
-        speed_text.display(screen)
-    else:
-        speed_text.x = 80
-        speed_text.display(screen)
+    #speed_text.display(screen)
 
     pygame.display.flip()
-
-
-
-
-
-
