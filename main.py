@@ -43,11 +43,11 @@ pygame.font.init()
 screen = pygame.display.set_mode(size)
 
 # Importing images
-bg_image = pygame.image.load("./Assets/Images/bg.png")
+bg_image = pygame.image.load("Assets/Images/bg.png")
 bg_rect = bg_image.get_rect()
-needle_image = pygame.image.load("./Assets/Images/Needle.png")
-speedometer_image = pygame.image.load("./Assets/Images/Speedometer.png")
-car_image = pygame.image.load("./Assets/Images/car_half2.png")
+needle_image = pygame.image.load("Assets/Images/Needle.png")
+speedometer_image = pygame.image.load("Assets/Images/Speedometer.png")
+car_image = pygame.image.load("Assets/Images/car_half2.png")
 
 # Declaring classes
 class Car:
