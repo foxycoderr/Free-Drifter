@@ -32,6 +32,7 @@ from datetime import datetime, timedelta
 # Initializing pygame
 pygame.init()
 
+
 # Setting window size
 size = width, height = 2200, 1200
 
@@ -56,8 +57,8 @@ class Car:
     # Parameter: drift_distance - "how much the drift should turn the car"
     # If a drift has been going on, increase drift distance, else zero it
     def __init__(self, image):
-        self.x = 960
-        self.y = 540
+        self.x = 1100
+        self.y = 600
         self.image = image
         self.perm_image = image
         self.angle = 1
@@ -227,16 +228,34 @@ y_shift = 0
 
 # FPS Mechanism
 prev = datetime.utcnow()
+prev_fps_switch = datetime.utcnow()
 FPS = 0
+fps_toggle = False
+
+
+
 
 while True:
+    # Getting pressed keys
+    keys = pygame.key.get_pressed()
+
     # FPS display
     FPS += 1
     print("FPS", FPS)
     if datetime.utcnow() - prev > timedelta(seconds=1):
         prev = datetime.utcnow()
-        fps.text = str(FPS)
+        fps.text = f"FPS: {FPS}"
         FPS = 0
+
+    # FPS display
+    if keys[pygame.K_LSUPER] and keys[pygame.K_LALT]:
+        if datetime.utcnow() - prev_fps_switch > timedelta(seconds=0.3):
+            prev_fps_switch = datetime.utcnow()
+            print("FPS CHANGE")
+            if fps_toggle == True:
+                fps_toggle = False
+            else:
+                fps_toggle = True
 
     # Event fetch
     event = pygame.event.poll()
@@ -245,8 +264,7 @@ while True:
     if event.type == pygame.QUIT:
         exit()
 
-    # Getting pressed keys
-    keys = pygame.key.get_pressed()
+
 
     # Rotation
     if keys[pygame.K_a]:
@@ -317,12 +335,17 @@ while True:
     car.rotate(rotation_shift)
     screen.blit(bg_image, bg_rect)
     car.display(screen)
-    speedometer.display(screen)
-    fps.display(screen)
-    needle.display(screen)
 
-    # Old, digital speed dial display (deprecated)
-    #speed_text.display(screen)
+
+
+    if fps_toggle:
+        fps.display(screen)
+
+
+    # Speed dial display (deprecated)
+    # speed_text.display(screen)
+    # speedometer.display(screen)
+    # needle.display(screen)
 
     # Updating display
     pygame.display.flip()
